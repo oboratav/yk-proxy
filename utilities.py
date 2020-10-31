@@ -10,13 +10,12 @@ def extract_credentials(encoded_string: str) -> tuple:
 
 def parameter_as_list(parameter) -> list:
     """
-    If a query parameter is repeated, falcon returns it as a list.
-    If it isn't repeated, falcon returns it as a string. This function
-    simplifies this behaviour by converting everything into a list.
+    If the parameter object is a list, return it as is. If it's a 
+    string or dictionary, return it enveloped in a list.
     """
     if type(parameter) == list:
         return parameter
-    elif type(parameter) == str:
+    elif type(parameter) in (str, dict):
         return [parameter]
 
 def generate_special_field(**kwargs) -> str:
