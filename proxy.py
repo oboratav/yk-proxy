@@ -5,6 +5,7 @@ import falcon
 from zeep import Client, xsd
 from zeep.cache import SqliteCache
 from zeep.transports import Transport
+from zeep.helpers import serialize_object
 
 from reference import (ERRORS_CREATE_SHIPMENT, PROD_WSDL_URL, SUCCESSFUL,
                        TEST_WSDL_URL, QueryShipmentIdentifier)
@@ -76,33 +77,33 @@ class Shipment(object):
         queryShipment
         """
         identifiers = []
-        shipment_id = req.params.get("shipment_id", None)
-        invoice_id = req.params.get("invoice_id", None)
-        if not any(shipment_id, invoice_id):
+        shipment_id = req.get_param_as_list("shipment_id", None)
+        invoice_id = req.get_param_as_list("invoice_id", None)
+        add_historical_data = req.get_param_as_bool("add_historical_data", default=True)
+
+        if not any((shipment_id, invoice_id)):
             raise falcon.HTTPBadRequest(title="400 Bad Request",
                                         description="No shipment identifier was provided")
+
+        if shipment_id is not None:
+            identifiers.extend(parameter_as_list(shipment_id))
+            identifier_type = QueryShipmentIdentifier.SHIPMENT_ID
         else:
-            if shipment_id is not None:
-                identifiers.extend(parameter_as_list(shipment_id))
-                identifier_type = QueryShipmentIdentifier.SHIPMENT_ID
-                query = req.context["client"].service.queryShipment(
-                    wsUserName=req.context["username"],
-                    wsPassword=req.context["password"],
-                    wsLanguage="TR", # Fixed value
-                    keys=identifiers,
-                    keyType=identifier_type,
-                    addHistoricalData=True, # hardcoded for now. will add a parameter for this later.
-                    onlyTracking=False, # also hardcoded for now.
-                )
-                if query.outFlag == SUCCESSFUL:
-                    resp.status = falcon.HTTP_OK
-                    response = {
+            identifiers.extend(parameter_as_list(invoice_id))
+            identifier_type = QueryShipmentIdentifier.INVOICE_ID
 
-                    }
-            else:
-                identifiers.extend(parameter_as_list(invoice_id))
-                identifier_type = QueryShipmentIdentifier.INVOICE_ID
-
+        query = req.context["client"].service.queryShipment(
+                wsUserName=req.context["username"],
+                wsPassword=req.context["password"],
+                wsLanguage="TR", # Fixed value
+                keys=identifiers,
+                keyType=identifier_type,
+                addHistoricalData=add_historical_data, # hardcoded for now. will add a parameter for this later.
+                onlyTracking=False, # also hardcoded for now.
+            )
+        if query.outFlag == SUCCESSFUL:
+            resp.status = falcon.HTTP_OK
+            resp.body = json.dumps(serialize_object(query, target_cls=dict))
 
     def on_delete(self, req, resp):
         """
