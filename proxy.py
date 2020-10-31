@@ -130,9 +130,8 @@ class Shipment(object):
                     response_content["shippingDeliveryDetailVO"].extend(
                         serialize_object(query_by_invoice_id, target_cls=dict)["shippingDeliveryDetailVO"])
 
-        if query.outFlag == SUCCESSFUL:
-            resp.status = falcon.HTTP_OK
-            resp.body = json.dumps(response_content)
+        resp.status = falcon.HTTP_OK
+        resp.body = json.dumps(response_content)
 
     def on_delete(self, req, resp):
         """
