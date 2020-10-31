@@ -2,5 +2,9 @@
 
 .vscode/*
 .history/
+__pycache__/
+
 *.code-workspace
 *.env
+*.pyc
+Pipfile
