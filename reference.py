@@ -1,5 +1,3 @@
-from enum import Enum
-
 import falcon
 
 # WSDL URLs
@@ -134,13 +132,11 @@ ERRORS_CREATE_SHIPMENT = {
     ),
 }
 
-class QueryShipmentIdentifier(Enum):
-    SHIPMENT_ID = 0
-    INVOICE_ID = 1
+IDENTIFIER_SHIPMENT_ID = 0
+IDENTIFIER_INVOICE_ID = 1
 
-class CODPaymentMethod(Enum):
-    CASH = 0
-    CREDIT_CARD = 1
+COD_PAYMENT_METHOD_CASH = 0
+COD_PAYMENT_METHOD_CREDIT_CARD = 1
 
 class CallResult(object):
     def __init__(self, outFlag: str, successful: bool):

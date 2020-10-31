@@ -8,7 +8,7 @@ from zeep.transports import Transport
 from zeep.helpers import serialize_object
 
 from reference import (ERRORS_CREATE_SHIPMENT, PROD_WSDL_URL, SUCCESSFUL,
-                       TEST_WSDL_URL, QueryShipmentIdentifier)
+                       TEST_WSDL_URL, IDENTIFIER_INVOICE_ID, IDENTIFIER_SHIPMENT_ID)
 from utilities import extract_credentials, parameter_as_list
 
 transport = Transport(cache=SqliteCache())
@@ -96,13 +96,12 @@ class Shipment(object):
                                         description="No identifier was provided")
 
         if shipment_id is not None:
-            identifier_type = QueryShipmentIdentifier.SHIPMENT_ID
             query_by_shipment_id = req.context["client"].service.queryShipment(
                 wsUserName=req.context["username"],
                 wsPassword=req.context["password"],
                 wsLanguage="TR", # Fixed value
                 keys=shipment_id,
-                keyType=identifier_type,
+                keyType=IDENTIFIER_SHIPMENT_ID,
                 addHistoricalData=add_historical_data,
                 onlyTracking=tracking_url_only,
             )
@@ -111,13 +110,12 @@ class Shipment(object):
                 response_content = serialize_object(query_by_shipment_id, target_cls=dict)
 
         if invoice_id is not None:
-            identifier_type = QueryShipmentIdentifier.INVOICE_ID
             query_by_invoice_id = req.context["client"].service.queryShipment(
                 wsUserName=req.context["username"],
                 wsPassword=req.context["password"],
                 wsLanguage="TR", # Fixed value
                 keys=invoice_id,
-                keyType=identifier_type,
+                keyType=IDENTIFIER_INVOICE_ID,
                 addHistoricalData=add_historical_data,
                 onlyTracking=tracking_url_only,
             )
