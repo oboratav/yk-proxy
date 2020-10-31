@@ -60,6 +60,14 @@ class LocaleMiddleware(object):
         # NOT IMPLEMENTED
         pass
 
+class FormatMiddleware(object):
+    """
+    Determines response formatting.
+    """
+    def process_response(self, req, resp):
+        # NOT IMPLEMENTED
+        pass
+
 class Shipment(object):
     """
 
@@ -76,34 +84,55 @@ class Shipment(object):
         """
         queryShipment
         """
-        identifiers = []
         shipment_id = req.get_param_as_list("shipment_id", None)
         invoice_id = req.get_param_as_list("invoice_id", None)
         add_historical_data = req.get_param_as_bool("add_historical_data", default=True)
+        tracking_url_only = req.get_param_as_bool("tracking_url_only", default=False)
+
+        response_content = {}
 
         if not any((shipment_id, invoice_id)):
             raise falcon.HTTPBadRequest(title="400 Bad Request",
-                                        description="No shipment identifier was provided")
+                                        description="No identifier was provided")
 
         if shipment_id is not None:
-            identifiers.extend(parameter_as_list(shipment_id))
             identifier_type = QueryShipmentIdentifier.SHIPMENT_ID
-        else:
-            identifiers.extend(parameter_as_list(invoice_id))
-            identifier_type = QueryShipmentIdentifier.INVOICE_ID
-
-        query = req.context["client"].service.queryShipment(
+            query_by_shipment_id = req.context["client"].service.queryShipment(
                 wsUserName=req.context["username"],
                 wsPassword=req.context["password"],
                 wsLanguage="TR", # Fixed value
-                keys=identifiers,
+                keys=shipment_id,
                 keyType=identifier_type,
-                addHistoricalData=add_historical_data, # hardcoded for now. will add a parameter for this later.
-                onlyTracking=False, # also hardcoded for now.
+                addHistoricalData=add_historical_data,
+                onlyTracking=tracking_url_only,
             )
+            # Error handling is not implemented yet
+            if query_by_shipment_id.outFlag == SUCCESSFUL:
+                response_content = serialize_object(query_by_shipment_id, target_cls=dict)
+
+        if invoice_id is not None:
+            identifier_type = QueryShipmentIdentifier.INVOICE_ID
+            query_by_invoice_id = req.context["client"].service.queryShipment(
+                wsUserName=req.context["username"],
+                wsPassword=req.context["password"],
+                wsLanguage="TR", # Fixed value
+                keys=invoice_id,
+                keyType=identifier_type,
+                addHistoricalData=add_historical_data,
+                onlyTracking=tracking_url_only,
+            )
+            # Error handling is not implemented yet
+            if query_by_invoice_id.outFlag == SUCCESSFUL:
+                if response_content == {}:
+                    response_content = serialize_object(query_by_invoice_id, target_cls=dict)
+                else:
+                    response_content["count"] += query_by_invoice_id.count
+                    response_content["shippingDeliveryDetailVO"].extend(
+                        serialize_object(query_by_invoice_id, target_cls=dict)["shippingDeliveryDetailVO"])
+
         if query.outFlag == SUCCESSFUL:
             resp.status = falcon.HTTP_OK
-            resp.body = json.dumps(serialize_object(query, target_cls=dict))
+            resp.body = json.dumps(response_content)
 
     def on_delete(self, req, resp):
         """
