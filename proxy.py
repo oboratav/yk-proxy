@@ -168,6 +168,7 @@ app = falcon.API(
     media_type="application/json",
     middleware=[
         AuthMiddleware(),
+        FormatMiddleware(),
         EnvironmentMiddleware(),
     ],
 )
