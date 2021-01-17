@@ -93,7 +93,7 @@ class Shipment(object):
         query = req.context["client"].service.createShipment(
             wsUserName=req.context["username"],
             wsPassword=req.context["password"],
-            wsLanguage="TR", # Fixed value
+            userLanguage="TR", # Fixed value
             ShippingOrderVO=shipments,
         )
 
