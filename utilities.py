@@ -120,6 +120,7 @@ def parse_shipment(req, shipment: dict) -> dict:
         "taxOfficeName": ("taxOfficeName", "to_address.tr_tax_office"),
         "orgGeoCode": ("orgGeoCode", "orgGeoCode"), # deprecated
         "privilegeOrder": ("privilegeOrder", "privilegeOrder"), # deprecated
+        "dcSelectedCredit": ("dcSelectedCredit", "dcSelectedCredit") # not implemented here
         "dcCreditRule": ("dcCreditRule", "dcCreditRule"), # not implemented here
         "emailAddress": ("emailAddress", "to_address.email"),
     }
