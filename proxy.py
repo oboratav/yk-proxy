@@ -9,7 +9,7 @@ from zeep.helpers import serialize_object
 
 from reference import (ERRORS_CREATE_SHIPMENT, PROD_WSDL_URL, SUCCESSFUL,
                        TEST_WSDL_URL, IDENTIFIER_INVOICE_ID, IDENTIFIER_SHIPMENT_ID)
-from utilities import extract_credentials, parameter_as_list
+from utilities import extract_credentials, parameter_as_list, unpack_phone_numbers, parse_shipment
 
 transport = Transport(cache=SqliteCache())
 
@@ -43,8 +43,7 @@ class EnvironmentMiddleware(object):
     """
     def process_request(self, req, resp):
         if (req.context["username"] == "YKTEST" 
-                or req.params.get("environment", None) == "test" 
-                or (req.method == "POST" and json.load(req.bounded_stream)["environment"] == "test")):
+                or req.params.get("environment", None) == "test"):
             req.context["client"] = test_client
             req.context["factory"] = test_factory
 
@@ -64,6 +63,10 @@ class FormatMiddleware(object):
     """
     Determines response formatting.
     """
+
+    def process_request(self, req, resp):
+        req.context["formatted"] = req.get_param_as_bool("formatted", default=False)
+
     def process_response(self, req, resp):
         # NOT IMPLEMENTED
         pass
@@ -76,9 +79,26 @@ class Shipment(object):
         """
         createShipment
         """
-        # NOT IMPLEMENTED
         body = json.load(req.bounded_stream)
-        pass
+        shipments = []
+        response_content = {}
+
+        for shipment in parameter_as_list(body):
+            soap_object = req.context["factory"].ShippingOrderVO(
+                **parse_shipment(shipment)
+            )
+            shipments.append(soap_object)
+
+
+        query = req.context["client"].service.createShipment(
+            wsUserName=req.context["username"],
+            wsPassword=req.context["password"],
+            wsLanguage="TR", # Fixed value
+            ShippingOrderVO=shipments,
+        )
+
+        resp.status = falcon.HTTP_OK
+        resp.body = json.dumps(serialize_object(query, target_cls=dict))
 
     def on_get(self, req, resp):
         """
