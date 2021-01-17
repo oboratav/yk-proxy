@@ -67,10 +67,6 @@ class FormatMiddleware(object):
     def process_request(self, req, resp):
         req.context["formatted"] = req.get_param_as_bool("formatted", default=False)
 
-    def process_response(self, req, resp):
-        # NOT IMPLEMENTED
-        pass
-
 class Shipment(object):
     """
 
@@ -81,7 +77,6 @@ class Shipment(object):
         """
         body = json.load(req.bounded_stream)
         shipments = []
-        response_content = {}
 
         for shipment in parameter_as_list(body):
             soap_object = req.context["factory"].ShippingOrderVO(
