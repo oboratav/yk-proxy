@@ -85,7 +85,7 @@ class Shipment(object):
 
         for shipment in parameter_as_list(body):
             soap_object = req.context["factory"].ShippingOrderVO(
-                **parse_shipment(shipment)
+                **parse_shipment(req, shipment)
             )
             shipments.append(soap_object)
 
