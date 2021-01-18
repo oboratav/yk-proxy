@@ -143,7 +143,7 @@ def parse_shipment(req, shipment: dict) -> dict:
 
     return dict(output_object)
 
-def generate_zpl_label(shipment: dict) -> dict:
+def generate_zpl_label(shipment: dict, job_id: str) -> dict:
     now = datetime.now()
     time = now.strftime("%H:%M:%S")
     date = now.strftime("%d/%m/%Y")
@@ -159,7 +159,7 @@ def generate_zpl_label(shipment: dict) -> dict:
         recipient_town=shipment["townName"].upper(),
         recipient_city=shipment["cityName"].upper(),
         contents=shipment["description"].upper(),
-        job_id=shipment["jobId"],
+        job_id=job_id,
         reference="", # not yet implemented
         waybill_number=str(shipment["waybillNo"]).upper(),
         barcode=shipment["cargoKey"].upper(),
