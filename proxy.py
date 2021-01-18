@@ -77,7 +77,10 @@ class Shipment(object):
         """
         body = json.load(req.bounded_stream)
         shipments = []
-
+        resp_obj = {
+            "successful": [],
+            "failed": [],
+        }
         for shipment in parameter_as_list(body):
             soap_object = req.context["factory"].ShippingOrderVO(
                 **parse_shipment(req, shipment)
@@ -91,9 +94,31 @@ class Shipment(object):
             userLanguage="TR", # Fixed value
             ShippingOrderVO=shipments,
         )
+        yk_resp = serialize_object(query, target_cls=dict)
 
-        resp.status = falcon.HTTP_OK
-        resp.body = json.dumps(serialize_object(query, target_cls=dict))
+        if yk_resp["outFlag"] == "0":
+            shipments_by_key = { _["cargoKey"]: _ for _ in shipments }
+            response_by_key = { _["cargoKey"]: _ for _ in yk_resp["shippingOrderDetailVO"] }
+            resp_obj["outFlag"] = yk_resp["outFlag"]
+            resp_obj["count"] = yk_resp["count"]
+            resp_obj["jobId"] = yk_resp["jobId"]
+            for shipment in response_by_key:
+                # if there aren't any errors
+                if shipment["errCode"] is None:
+                    # generate label and add to the main shipment object
+                    shipments_by_key[shipment["cargoKey"]]["label"] = generate_zpl_label(
+                        shipments_by_key[shipment["cargoKey"]], str(yk_resp["jobId"]))
+                    resp_obj["successful"].append(shipments_by_key[shipment["cargoKey"]])
+                else:
+                    # add data from the response object to the main shipment object
+                    shipments_by_key[shipment["cargoKey"]]["errCode"] = shipment["errCode"]
+                    shipments_by_key[shipment["cargoKey"]]["errMessage"] = shipment["errMessage"]
+                    resp_obj["failed"].append(shipments_by_key[shipment["cargoKey"]])
+            resp.status = falcon.HTTP_OK
+            resp.body = json.dumps(resp_obj)
+        elif yk_resp["outFlag"] == "1":
+            resp.status = falcon.HTTP_500
+            resp.body = json.dumps(yk_resp)
 
     def on_get(self, req, resp):
         """
