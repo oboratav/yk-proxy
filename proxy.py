@@ -4,12 +4,14 @@ import json
 import falcon
 from zeep import Client, xsd
 from zeep.cache import SqliteCache
-from zeep.transports import Transport
 from zeep.helpers import serialize_object
+from zeep.transports import Transport
 
-from reference import (ERRORS_CREATE_SHIPMENT, PROD_WSDL_URL, SUCCESSFUL,
-                       TEST_WSDL_URL, IDENTIFIER_INVOICE_ID, IDENTIFIER_SHIPMENT_ID)
-from utilities import extract_credentials, parameter_as_list, unpack_phone_numbers, parse_shipment
+from reference import (ERRORS_CREATE_SHIPMENT, IDENTIFIER_INVOICE_ID,
+                       IDENTIFIER_SHIPMENT_ID, PROD_WSDL_URL, SUCCESSFUL,
+                       TEST_WSDL_URL)
+from utilities import (extract_credentials, generate_zpl_label,
+                       parameter_as_list, parse_shipment, unpack_phone_numbers)
 
 transport = Transport(cache=SqliteCache())
 
@@ -97,12 +99,18 @@ class Shipment(object):
         yk_resp = serialize_object(query, target_cls=dict)
 
         if yk_resp["outFlag"] == "0":
-            shipments_by_key = { _["cargoKey"]: _ for _ in shipments }
+            shipments_by_key = { _["cargoKey"]: serialize_object(_, target_cls=dict) for _ in shipments }
             response_by_key = { _["cargoKey"]: _ for _ in yk_resp["shippingOrderDetailVO"] }
-            resp_obj["outFlag"] = yk_resp["outFlag"]
+            resp_obj["outFlag"] = str(yk_resp["outFlag"])
             resp_obj["count"] = yk_resp["count"]
             resp_obj["jobId"] = yk_resp["jobId"]
-            for shipment in response_by_key:
+            # strip SkipValues
+            for skey, shipment in shipments_by_key.items():
+                for ikey, ival in shipment.items():
+                    if ival == xsd.SkipValue:
+                        shipments_by_key[skey][ikey] = ""
+
+            for skey, shipment  in response_by_key.items():
                 # if there aren't any errors
                 if shipment["errCode"] is None:
                     # generate label and add to the main shipment object
