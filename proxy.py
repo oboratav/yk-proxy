@@ -16,9 +16,9 @@ from utilities import (extract_credentials, generate_zpl_label,
 transport = Transport(cache=SqliteCache())
 
 test_client = Client(TEST_WSDL_URL, transport=transport)
-test_factory = test_client.type_factory("tns")
+test_factory = test_client.type_factory("ns1")
 prod_client = Client(PROD_WSDL_URL, transport=transport)
-prod_factory = prod_client.type_factory("tns")
+prod_factory = prod_client.type_factory("ns1")
 
 class AuthMiddleware(object):
     """
