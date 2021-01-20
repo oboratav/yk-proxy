@@ -4,8 +4,8 @@ import falcon
 
 # WSDL URLs
 # TEST_WSDL_URL = "http://testwebservices.yurticikargo.com:9090/KOPSWebServices/ShippingOrderDispatcherServices?wsdl"
-TEST_WSDL_URL = "http://webservices.yurticikargo.com:8080/KOPSWebServices/ShippingOrderDispatcherServices?wsdl"
-PROD_WSDL_URL = "http://webservices.yurticikargo.com:8080/KOPSWebServices/ShippingOrderDispatcherServices?wsdl"
+TEST_WSDL_URL = "https://testwebservices.yurticikargo.com/KOPSWebServices/ShippingOrderDispatcherServices?wsdl"
+PROD_WSDL_URL = "https://ws.yurticikargo.com/KOPSWebServices/ShippingOrderDispatcherServices?wsdl"
 
 SENDER_NAME = os.getenv("YK_SENDER_NAME", "")
 SENDER_TELEPHONE = os.getenv("YK_SENDER_TELEPHONE", "")
